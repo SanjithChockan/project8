@@ -12,9 +12,6 @@ import UserList from "./components/UserList";
 import UserPhotos from "./components/UserPhotos";
 import LoginRegister from "./components/LoginRegister";
 
-//import fetchModel from "./lib/fetchModelData";
-
-
 function UserDetailRoute({ changeTopBarTitle }) {
   const { userId } = useParams();
   return <UserDetail userId={userId} changeTopBarTitle={changeTopBarTitle} />;

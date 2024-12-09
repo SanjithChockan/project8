@@ -198,38 +198,54 @@ app.get("/user/:id", requireLogin, async function (request, response) {
  * URL /photosOfUser/:id - Returns the Photos for User (id).
  */
 app.get("/photosOfUser/:id", requireLogin, async function (request, response) {
-  const id = request.params.id;
+  const viewer_id = request.session.user_id;
+  const owner_id = request.params.id;
 
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    return response.status(400).send("Invalid user ID format");
-  }
-  //console.log("Getting photos of user");
   try {
-    const photos = await Photo.find({ user_id: id }, '_id user_id comments file_name date_time');
+    // Build the query to check permissions
+    const query = {
+      user_id: owner_id,
+      $or: [
+        { is_sharing_enabled: false }, // Public photos
+        { user_id: viewer_id }, // User's own photos
+        { sharing_list: viewer_id }, // Shared with viewer
+        { 
+          is_sharing_enabled: true, 
+          sharing_list: { $size: 0 }, 
+          user_id: viewer_id 
+        } // Private photos visible only to owner
+      ]
+    };
 
-    // Populate comments with minimal user info
+    const photos = await Photo.find(query);
+    
+    // Populate comments with user info
     const populatedPhotos = await Promise.all(photos.map(async photo => {
-      const newComments = await Promise.all(photo.comments.map(async commentElement => {
-
-        const user = await User.findById(commentElement.user_id, '_id first_name last_name');
-
-        return {comment: commentElement.comment, date_time: commentElement.date_time, _id: commentElement._id, user};
+      const newComments = await Promise.all(photo.comments.map(async comment => {
+        const user = await User.findById(comment.user_id, '_id first_name last_name');
+        return {
+          comment: comment.comment,
+          date_time: comment.date_time,
+          _id: comment._id,
+          user
+        };
       }));
 
-      //photo.comments = newComments;
-
-      //return photo;
-      return {_id: photo._id, user_id: photo.user_id, file_name: photo.file_name, date_time: photo.date_time, comments: newComments};
+      return {
+        _id: photo._id,
+        user_id: photo.user_id,
+        file_name: photo.file_name,
+        date_time: photo.date_time,
+        comments: newComments,
+        sharing_list: photo.sharing_list,
+        is_sharing_enabled: photo.is_sharing_enabled
+      };
     }));
-
-    //console.log(JSON.stringify(populatedPhotos));
-
-    if (populatedPhotos.length === 0) return response.status(400).send("No photos found for this user");
 
     return response.json(populatedPhotos);
   } catch (err) {
     console.error("Error fetching photos:", err);
-    return response.status(400).send("Invalid ID format or no photos found");
+    return response.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -370,14 +386,21 @@ app.post('/photos/new', requireLogin, processFormBody, async (req, res) => {
     console.log('File saved successfully');
 
     // Create a new photo object in the database
-    const newPhoto = new Photo({
+    const photoData = {
       file_name: uniqueFilename,
       date_time: new Date(timestamp),
       user_id: user_id,
       comments: [],
-    });
+      is_sharing_enabled: false
+    };
 
-    console.log('Saving photo to database');
+    // Handle sharing list if provided
+    if (req.body.sharing_list) {
+      photoData.is_sharing_enabled = true;
+      photoData.sharing_list = JSON.parse(req.body.sharing_list);
+    }
+
+    const newPhoto = new Photo(photoData);
     await newPhoto.save();
 
     console.log('Photo uploaded successfully');
