@@ -41,7 +41,13 @@ function UserPhotos({ userId, changeTopBarTitle }) {
       axios.get(`http://localhost:3000/photosOfUser/${userId}`),
     ])
       .then(([userResponse, userPhotosResponse]) => {
-        setUserPhotos(userPhotosResponse.data);
+        const sortedPhotos = userPhotosResponse.data.sort((a, b) => {
+          if (b.likes?.length !== a.likes?.length) {
+            return (b.likes?.length || 0) - (a.likes?.length || 0);
+          }
+          return new Date(b.date_time) - new Date(a.date_time);
+        });
+        setUserPhotos(sortedPhotos);
         changeTopBarTitle(
           `Photos of ${userResponse.data.first_name} ${userResponse.data.last_name}`
         );
@@ -53,6 +59,32 @@ function UserPhotos({ userId, changeTopBarTitle }) {
         setIsLoading(false);
       });
   }, [userId, changeTopBarTitle]);
+
+  const handleLikeToggle = (photoId, liked) => {
+    const url = liked
+        ? `http://localhost:3000/photos/${photoId}/unlike`
+        : `http://localhost:3000/photos/${photoId}/like`;
+
+    axios
+        .post(url)
+        .then(() => {
+          setUserPhotos((prevPhotos) =>
+              prevPhotos.map((photo) =>
+                  photo._id === photoId
+                      ? {
+                        ...photo,
+                        likes: liked
+                            ? photo.likes.filter((id) => id !== userId)
+                            : [...(photo.likes || []), userId],
+                      }
+                      : photo
+              )
+          );
+        })
+        .catch((error) => {
+          console.error("Error updating like:", error);
+        });
+  };
 
   const handlePhotoChange = (event) => {
     const file = event.target.files[0];
@@ -150,6 +182,24 @@ function UserPhotos({ userId, changeTopBarTitle }) {
       });
   };
 
+  const handleDeletePhoto = (photoId) => {
+    axios
+        .delete(`http://localhost:3000/photos/${photoId}`)
+        .then(() => {
+          setUserPhotos((prevPhotos) => prevPhotos.filter((photo) => photo._id !== photoId));
+        })
+        .catch((error) => {
+          console.error("Error deleting photo:", error);
+        });
+  };
+
+  const handleDeleteComment = (photoId, commentIndex) => {
+    axios
+        .delete(`http://localhost:3000/photos/${photoId}/comments/${commentIndex}`)
+        .then(() => alert('Comment deleted successfully'))
+        .catch((err) => console.error('Failed to delete comment:', err));
+  };
+
   return (
     <Box sx={{ padding: 2, height: "calc(100vh - 64px)", overflow: "auto" }}>
       <Stack spacing={4}>
@@ -227,87 +277,113 @@ function UserPhotos({ userId, changeTopBarTitle }) {
           )}
         </Dialog>
 
-        {userPhotos.map((photo) => (
-          <Card key={photo._id} sx={{ maxWidth: 600 }}>
-            <CardContent>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                <Typography variant="body2" color="text.secondary">
-                Posted {new Date(photo.date_time).toLocaleString()}
-                </Typography>
-                {photo.is_sharing_enabled && (
-                <Typography variant="body2" color="primary">
-                    {photo.sharing_list?.length === 0 
-                    ? "Private" 
-                    : `Shared with ${photo.sharing_list?.length} users`}
-                </Typography>
-                )}
-            </Box>
-            <CardMedia
-              component="img"
-              image={`http://localhost:3000/images/${photo.file_name}`}
-              alt="User photo"
-              sx={{ height: 400, objectFit: "contain" }}
-            />
-            
-              <Typography variant="body2" color="text.secondary">
-                Posted {new Date(photo.date_time).toLocaleString()}
-              </Typography>
-              {photo.comments?.length > 0 && (
-                <Box>
-                  <Typography variant="h6">Comments</Typography>
-                  <Stack spacing={1}>
-                    {photo.comments?.map((comment) => (
-                      <Box key={comment._id}>
-                        <Divider />
-                        <Box
-                          sx={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            marginBottom: 1,
-                          }}
-                        >
-                          {comment.user ? (
-                            <Link
-                              href={`#/users/${comment.user._id}`}
-                              underline="hover"
-                            >
-                              {`${comment.user.first_name} ${comment.user.last_name}`}
-                            </Link>
-                          ) : (
-                            <Typography variant="body2" color="error">
-                              Unknown User
-                            </Typography>
-                          )}
-                          <Typography variant="body2">
-                            {new Date(comment.date_time).toLocaleString()}
-                          </Typography>
-                        </Box>
-                        <Typography>{comment.comment}</Typography>
+        {userPhotos.map((photo) => {
+          const likesArray = Array.isArray(photo.likes) ? photo.likes : [];
+          const userLiked = likesArray.includes(userId);
+          return (
+              <Card key={photo._id} sx={{ maxWidth: 600 }}>
+                <CardContent>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      Posted {new Date(photo.date_time).toLocaleString()}
+                    </Typography>
+                    <Button
+                        variant={userLiked ? "contained" : "outlined"}
+                        onClick={() => handleLikeToggle(photo._id, userLiked)}
+                    >
+                      {userLiked ? "Unlike" : "Like"}
+                    </Button>
+                    <Button
+                        variant="contained"
+                        color="error"
+                        onClick={() => handleDeletePhoto(photo._id)}
+                    >
+                      Delete Photo
+                    </Button>
+                    {photo.is_sharing_enabled && (
+                        <Typography variant="body2" color="primary">
+                          {photo.sharing_list?.length === 0
+                              ? "Private"
+                              : `Shared with ${photo.sharing_list?.length} users`}
+
+                        </Typography>
+                    )}
+                  </Box>
+                  <Typography variant="body2">{likesArray.length} likes</Typography>
+                  <CardMedia
+                      component="img"
+                      image={`http://localhost:3000/images/${photo.file_name}`}
+                      alt="User photo"
+                      sx={{ height: 400, objectFit: "contain" }}
+                  />
+
+                  <Typography variant="body2" color="text.secondary">
+                    Posted {new Date(photo.date_time).toLocaleString()}
+                  </Typography>
+                  {photo.comments?.length > 0 && (
+                      <Box>
+                        <Typography variant="h6">Comments</Typography>
+                        <Stack spacing={1}>
+                          {photo.comments?.map((comment, index) => (
+                              <Box key={index}>
+                                <Divider />
+                                <Box
+                                    sx={{
+                                      display: "flex",
+                                      justifyContent: "space-between",
+                                      marginBottom: 1,
+                                    }}
+                                >
+                                  {comment.user ? (
+                                      <Link
+                                          href={`#/users/${comment.user._id}`}
+                                          underline="hover"
+                                      >
+                                        {`${comment.user.first_name} ${comment.user.last_name}`}
+                                      </Link>
+                                  ) : (
+                                      <Typography variant="body2" color="error">
+                                        Unknown User
+                                      </Typography>
+                                  )}
+                                  <Typography variant="body2">
+                                    {new Date(comment.date_time).toLocaleString()}
+                                  </Typography>
+                                </Box>
+                                <Typography>{comment.comment}</Typography>
+                                <Button
+                                    size="small"
+                                    color="error"
+                                    onClick={() => handleDeleteComment(photo._id, index)}
+                                >
+                                  Delete Comment
+                                </Button>
+                              </Box>
+                          ))}
+                        </Stack>
                       </Box>
-                    ))}
-                  </Stack>
-                </Box>
-              )}
-              <Box sx={{ marginTop: 2 }}>
-                <TextField
-                  label="Add a comment"
-                  value={newComments[photo._id] || ""}
-                  onChange={(e) => handleCommentChange(photo._id, e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  size="small"
-                  sx={{ marginBottom: 1 }}
-                />
-                <Button
-                  variant="contained"
-                  onClick={() => handleCommentSubmit(photo._id)}
-                >
-                  Post Comment
-                </Button>
-              </Box>
-            </CardContent>
-          </Card>
-        ))}
+                  )}
+                  <Box sx={{ marginTop: 2 }}>
+                    <TextField
+                        label="Add a comment"
+                        value={newComments[photo._id] || ""}
+                        onChange={(e) => handleCommentChange(photo._id, e.target.value)}
+                        fullWidth
+                        variant="outlined"
+                        size="small"
+                        sx={{ marginBottom: 1 }}
+                    />
+                    <Button
+                        variant="contained"
+                        onClick={() => handleCommentSubmit(photo._id)}
+                    >
+                      Post Comment
+                    </Button>
+                  </Box>
+                </CardContent>
+              </Card>
+          )
+        })}
       </Stack>
     </Box>
   );
