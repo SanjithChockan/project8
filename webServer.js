@@ -237,6 +237,8 @@ app.get("/photosOfUser/:id", requireLogin, async function (request, response) {
         file_name: photo.file_name,
         date_time: photo.date_time,
         comments: newComments,
+        likes: Array.isArray(photo.likes) ? photo.likes : [],
+        liked_by_user: photo.likes.includes(viewer_id),
         sharing_list: photo.sharing_list,
         is_sharing_enabled: photo.is_sharing_enabled
       };
@@ -411,6 +413,131 @@ app.post('/photos/new', requireLogin, processFormBody, async (req, res) => {
     return res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+app.post('/photos/:photo_id/like', requireLogin, async (req, res) => {
+  const user_id = req.session.user_id;
+  const { photo_id } = req.params;
+
+  try {
+    const photo = await Photo.findById(photo_id);
+    if (!photo) {
+      return res.status(404).json({ error: 'Photo not found' });
+    }
+
+    if (photo.likes.includes(user_id)) {
+      return res.status(400).json({ error: 'Photo already liked' });
+    }
+
+    photo.likes.push(user_id);
+    await photo.save();
+
+    return res.status(200).json({ success: true, likes: photo.likes.length });
+  } catch (err) {
+    console.error('Error liking photo:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/photos/:photo_id/unlike', requireLogin, async (req, res) => {
+  const user_id = req.session.user_id;
+  const { photo_id } = req.params;
+
+  try {
+    const photo = await Photo.findById(photo_id);
+    if (!photo) {
+      return res.status(404).json({ error: 'Photo not found' });
+    }
+
+    const likeIndex = photo.likes.indexOf(user_id);
+    if (likeIndex === -1) {
+      return res.status(400).json({ error: 'Photo not liked' });
+    }
+
+    photo.likes.splice(likeIndex, 1);
+    await photo.save();
+
+    return res.status(200).json({ success: true, likes: photo.likes.length });
+  } catch (err) {
+    console.error('Error unliking photo:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.delete('/photos/:photo_id', requireLogin, async (req, res) => {
+  const userId = req.session.user_id;
+  const { photo_id } = req.params;
+
+  try {
+    const photo = await Photo.findById(photo_id);
+    if (!photo) {
+      return res.status(404).send({ error: 'Photo not found' });
+    }
+
+    if (photo.user_id.toString() !== userId) {
+      return res.status(403).send({ error: 'Unauthorized to delete this photo' });
+    }
+
+    await Photo.findByIdAndDelete(photo_id);
+    res.status(200).send({ message: 'Photo deleted successfully' });
+  } catch (err) {
+    res.status(500).send({ error: 'Internal server error' });
+  }
+});
+
+app.delete('/photos/:photoId/comments/:commentIndex', requireLogin,async (req, res) => {
+  const { photoId, commentIndex } = req.params;
+
+  try {
+    const photo = await Photo.findById(photoId);
+    if (!photo) {
+      return res.status(404).send('Photo not found');
+    }
+
+    if (commentIndex < 0 || commentIndex >= photo.comments.length) {
+      return res.status(400).send('Invalid comment index');
+    }
+
+    photo.comments.splice(commentIndex, 1); // Remove the comment
+    await photo.save();
+    res.status(200).send('Comment deleted successfully');
+  } catch (err) {
+    console.error('Error deleting comment:', err);
+    res.status(500).send('Internal server error');
+  }
+});
+
+
+app.delete('/users/:user_id', requireLogin,async (req, res) => {
+  const userId = req.session.user_id;
+  const { user_id } = req.params;
+
+  if (userId !== user_id) {
+    return res.status(403).send({ error: 'Unauthorized to delete this account' });
+  }
+
+
+  try {
+    const user = await User.findById(user_id);
+    if (!user) {
+      return res.status(404).send({ error: 'User not found' });
+    }
+
+    // Delete associated photos
+    await Photo.deleteMany({ user_id: user_id });
+
+    // Delete associated comments
+    await Comment.deleteMany({ user_id: user_id });
+
+    // Delete the user account
+    await User.findByIdAndDelete(user_id);
+
+    req.session.destroy(); // Log the user out
+    res.status(200).send({ message: 'User account deleted successfully' });
+  } catch (err) {
+    res.status(500).send({ error: err });
+  }
+});
+
 
 const server = app.listen(3000, function () {
   const port = server.address().port;
