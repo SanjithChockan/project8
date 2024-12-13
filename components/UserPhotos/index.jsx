@@ -25,7 +25,7 @@ import {
   Link
 } from "@mui/material";
 
-function UserPhotos({ userId, changeTopBarTitle }) {
+function UserPhotos({ userId, loggedInUserId, changeTopBarTitle }) {
   const [userPhotos, setUserPhotos] = useState([]);
   const [newComments, setNewComments] = useState({});
   const [selectedPhoto, setSelectedPhoto] = useState(null);
@@ -68,16 +68,14 @@ function UserPhotos({ userId, changeTopBarTitle }) {
     axios
         .post(url)
         .then(() => {
-          setUserPhotos((prevPhotos) =>
-              prevPhotos.map((photo) =>
-                  photo._id === photoId
+          setUserPhotos((prevPhotos) => prevPhotos.map((photo) => (photo._id === photoId
                       ? {
                         ...photo,
                         likes: liked
                             ? photo.likes.filter((id) => id !== userId)
                             : [...(photo.likes || []), userId],
                       }
-                      : photo
+                      : photo)
               )
           );
         })
@@ -95,10 +93,7 @@ function UserPhotos({ userId, changeTopBarTitle }) {
     setSelectedPhoto(file);
   };
 
-  //const [sharingList, setSharingList] = useState([]);
-  //const [isSharingEnabled, setIsSharingEnabled] = useState(false);
 
-  //const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [sharingEnabled, setSharingEnabled] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
@@ -197,14 +192,12 @@ function UserPhotos({ userId, changeTopBarTitle }) {
     axios
         .delete(`http://localhost:3000/photos/${photoId}/comments/${commentIndex}`)
         .then(() => {
-          setUserPhotos((prevPhotos) =>
-              prevPhotos.map((photo) =>
-                  photo._id === photoId
+          setUserPhotos((prevPhotos) => prevPhotos.map((photo) => (photo._id === photoId
                       ? {
                         ...photo,
                         comments: photo.comments.filter((_, index) => index !== commentIndex),
                       }
-                      : photo
+                      : photo)
               )
           );
           alert("Comment deleted successfully");
@@ -295,6 +288,8 @@ function UserPhotos({ userId, changeTopBarTitle }) {
         {userPhotos.map((photo) => {
           const likesArray = Array.isArray(photo.likes) ? photo.likes : [];
           const userLiked = likesArray.includes(userId);
+          const isPhotoOwner = photo.user_id === loggedInUserId;  // Check if logged-in user owns the photo
+          
           return (
               <Card key={photo._id} sx={{ maxWidth: 600 }}>
                 <CardContent>
@@ -308,13 +303,14 @@ function UserPhotos({ userId, changeTopBarTitle }) {
                     >
                       {userLiked ? "Unlike" : "Like"}
                     </Button>
-                    <Button
-                        variant="contained"
-                        color="error"
-                        onClick={() => handleDeletePhoto(photo._id)}
-                    >
-                      Delete Photo
-                    </Button>
+
+                    {/* Only show delete photo button if user owns the photo */}
+                    {isPhotoOwner && (
+                      <Button onClick={() => handleDeletePhoto(photo._id)}>
+                        Delete Photo
+                      </Button>
+                    )}
+
                     {photo.is_sharing_enabled && (
                         <Typography variant="body2" color="primary">
                           {photo.sharing_list?.length === 0
@@ -366,6 +362,8 @@ function UserPhotos({ userId, changeTopBarTitle }) {
                                   </Typography>
                                 </Box>
                                 <Typography>{comment.comment}</Typography>
+
+                                {isPhotoOwner && (
                                 <Button
                                     size="small"
                                     color="error"
@@ -373,6 +371,8 @@ function UserPhotos({ userId, changeTopBarTitle }) {
                                 >
                                   Delete Comment
                                 </Button>
+                                )}
+
                               </Box>
                           ))}
                         </Stack>
@@ -397,7 +397,7 @@ function UserPhotos({ userId, changeTopBarTitle }) {
                   </Box>
                 </CardContent>
               </Card>
-          )
+          );
         })}
       </Stack>
     </Box>

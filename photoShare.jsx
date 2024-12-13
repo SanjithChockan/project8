@@ -17,9 +17,9 @@ function UserDetailRoute({ changeTopBarTitle }) {
   return <UserDetail userId={userId} changeTopBarTitle={changeTopBarTitle} />;
 }
 
-function UserPhotosRoute({ changeTopBarTitle }) {
+function UserPhotosRoute({ changeTopBarTitle, user }) {
   const { userId } = useParams();
-  return <UserPhotos userId={userId} changeTopBarTitle={changeTopBarTitle} />;
+  return <UserPhotos userId={userId} loggedInUserId={user?._id} changeTopBarTitle={changeTopBarTitle} />;
 }
 
 function PhotoShare() {
@@ -80,7 +80,7 @@ function PhotoShare() {
                     <Route
                       path="/photos/:userId"
                       element={
-                        <UserPhotosRoute changeTopBarTitle={changeTopBarTitle} />
+                        <UserPhotosRoute changeTopBarTitle={changeTopBarTitle} user={user} />
                       }
                     />
                     <Route path="/users" element={<UserList />} />

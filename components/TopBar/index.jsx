@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { AppBar, Toolbar, Typography, Button, Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
 import "./styles.css";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
 
 function TopBar({ title, user, onLogout, onAddPhoto }) {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
