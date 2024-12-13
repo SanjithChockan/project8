@@ -279,6 +279,12 @@ app.post('/user', async function (req, res) {
     });
 
     await newUser.save();
+
+    await Activity.create({
+      user_id: newUser._id,
+      activity_type: 'USER_REGISTER'
+    });
+
     return res.json({ login_name: newUser.login_name });
   } catch (err) {
     console.error('Registration error:', err);
@@ -298,6 +304,12 @@ app.post('/admin/login', async function (req, res) {
       return res.status(400).json({ error: 'Invalid login name or password' });
     }
     req.session.user_id = user._id;
+
+    await Activity.create({
+      user_id: user._id,
+      activity_type: 'USER_LOGIN'
+    });
+
     return res.json({ _id: user._id, first_name: user.first_name });
   } catch (err) {
     console.error('Login error:', err);
@@ -315,11 +327,19 @@ app.post('/admin/logout', function (req, res) {
   if (!req.session.user_id) {
     return res.status(400).json({ error: 'Not logged in' });
   }
-  req.session.destroy(err => {
+  req.session.destroy( err => {
     if (err) {
       console.error('Logout error:', err);
       return res.status(500).json({ error: 'Internal server error' });
     }
+
+    /*
+    await Activity.create({
+      user_id: req.session.user_id,
+      activity_type: 'USER_LOGOUT'
+    });
+    */
+    
     return res.json({ success: true });
 
   });
@@ -356,6 +376,12 @@ app.post('/commentsOfPhoto/:photo_id', requireLogin, async function (req, res) {
     // Fetch user details for the new comment
     const user = await User.findById(user_id, '_id first_name last_name');
     newComment.user = user;
+
+    await Activity.create({
+      user_id: req.session.user_id,
+      activity_type: 'NEW_COMMENT',
+      photo_id: photo._id
+    });
 
     return res.status(200).json(newComment);
   } catch (err) {
@@ -409,6 +435,13 @@ app.post('/photos/new', requireLogin, processFormBody, async (req, res) => {
     await newPhoto.save();
 
     console.log('Photo uploaded successfully');
+
+    await Activity.create({
+      user_id: req.session.user_id,
+      activity_type: 'PHOTO_UPLOAD',
+      photo_id: newPhoto._id
+    });
+
     // Respond with status 200 as expected by the test
     return res.status(200).json(newPhoto);
   } catch (err) {
