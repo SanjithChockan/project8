@@ -26,6 +26,7 @@ const models = require("./modelData/photoApp.js").models;
 const User = require("./schema/user.js");
 const Photo = require("./schema/photo.js");
 const SchemaInfo = require("./schema/schemaInfo.js");
+const Activity = require("./schema/activity.js");
 
 const versionString = "1.0";
 
@@ -34,6 +35,7 @@ const removePromises = [
   User.deleteMany({}),
   Photo.deleteMany({}),
   SchemaInfo.deleteMany({}),
+  Activity.deleteMany({}),
 ];
 
 Promise.all(removePromises)

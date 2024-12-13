@@ -52,6 +52,8 @@ const fs = require("fs");
 const User = require("./schema/user.js");
 const Photo = require("./schema/photo.js");
 const SchemaInfo = require("./schema/schemaInfo.js");
+const Activity = require('./schema/activity.js');
+
 
 // add the express-session and body-parser middleware to express with the Express use
 app.use(session({secret: "secretKey", resave: false, saveUninitialized: false}));
@@ -463,6 +465,21 @@ app.post('/photos/:photo_id/unlike', requireLogin, async (req, res) => {
     return res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+// Get recent activities endpoint
+app.get('/activities', requireLogin, async (req, res) => {
+  try {
+    const activities = await Activity.find()
+      .sort({ date_time: -1 })
+      .limit(5)
+      .populate('user_id', 'first_name last_name')
+      .populate('photo_id', 'file_name');
+    res.json(activities);
+  } catch (err) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 
 app.delete('/photos/:photo_id', requireLogin, async (req, res) => {
   const userId = req.session.user_id;

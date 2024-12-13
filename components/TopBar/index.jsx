@@ -2,10 +2,13 @@ import React, { useState } from "react";
 import { AppBar, Toolbar, Typography, Button, Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
 import "./styles.css";
 import axios from "axios";
+import ActivityFeed from "../ActivityFeed";
+
 
 function TopBar({ title, user, onLogout, onAddPhoto }) {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [deleting, setDeleting] = useState(false);
+    const [activityDialogOpen, setActivityDialogOpen] = useState(false);
 
     const handleDeleteAccount = () => {
         setDeleting(true);
@@ -43,6 +46,7 @@ function TopBar({ title, user, onLogout, onAddPhoto }) {
                             >
                                 Hi {user.first_name} {user.last_name}
                             </Typography>
+                            
                             <Button
                                 color="inherit"
                                 onClick={onAddPhoto}
@@ -50,9 +54,18 @@ function TopBar({ title, user, onLogout, onAddPhoto }) {
                             >
                                 Add Photo
                             </Button>
+
+                            <Button 
+                                color="inherit" 
+                                onClick={() => setActivityDialogOpen(true)}
+                            >
+                                Activities
+                            </Button>
+
                             <Button color="inherit" onClick={onLogout}>
                                 Logout
                             </Button>
+                            
                             <Button
                                 color="inherit"
                                 onClick={() => setDeleteDialogOpen(true)}
@@ -65,6 +78,11 @@ function TopBar({ title, user, onLogout, onAddPhoto }) {
                             Please Login
                         </Typography>
                     )}
+                    
+                    <ActivityFeed 
+                        open={activityDialogOpen}
+                        onClose={() => setActivityDialogOpen(false)}
+                    />
                 </Toolbar>
             </AppBar>
             <Dialog
