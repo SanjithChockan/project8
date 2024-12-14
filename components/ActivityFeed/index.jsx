@@ -32,7 +32,7 @@ function ActivityFeed({ open, onClose }) {
   }, [open]);
 
   const renderActivityContent = (activity) => {
-    if (['PHOTO_UPLOAD', 'NEW_COMMENT'].includes(activity.activity_type) && activity.photo_id) {
+    if (['PHOTO_UPLOAD', 'NEW_COMMENT', 'USER_LIKE'].includes(activity.activity_type) && activity.photo_id) {
       return (
         <ListItemAvatar>
           <Avatar 
@@ -59,6 +59,8 @@ function ActivityFeed({ open, onClose }) {
         return `${userName} logged in`;
       case 'USER_LOGOUT':
         return `${userName} logged out`;
+      case 'USER_LIKE':
+        return `${userName} liked a photo`;
       default:
         return 'Unknown activity';
     }

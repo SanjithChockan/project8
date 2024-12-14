@@ -323,7 +323,7 @@ app.post('/admin/login', async function (req, res) {
  */
 
 
-app.post('/admin/logout', function (req, res) {
+app.post('/admin/logout', async function (req, res) {
   if (!req.session.user_id) {
     return res.status(400).json({ error: 'Not logged in' });
   }
@@ -467,6 +467,12 @@ app.post('/photos/:photo_id/like', requireLogin, async (req, res) => {
 
     photo.likes.push(user_id);
     await photo.save();
+
+    await Activity.create({
+      user_id: user_id,
+      activity_type: 'USER_LIKE',
+      photo_id: photo._id
+    });
 
     return res.status(200).json({ success: true, likes: photo.likes.length });
   } catch (err) {
