@@ -312,6 +312,7 @@ function UserPhotos({ userId, loggedInUserId, changeTopBarTitle }) {
                     >
                       {userLiked ? "Unlike" : "Like"}
                     </Button>
+                    <Button variant="body2">{likesArray.length} likes</Button>
 
                     {/* Only show delete photo button if user owns the photo */}
                     {isPhotoOwner && (
@@ -328,8 +329,9 @@ function UserPhotos({ userId, loggedInUserId, changeTopBarTitle }) {
 
                         </Typography>
                     )}
+                    
                   </Box>
-                  <Typography variant="body2">{likesArray.length} likes</Typography>
+                  {/*<Typography variant="body2">{likesArray.length} likes</Typography>*/}
                   <CardMedia
                       component="img"
                       image={`http://localhost:3000/images/${photo.file_name}`}
