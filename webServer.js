@@ -327,20 +327,18 @@ app.post('/admin/logout', async function (req, res) {
   if (!req.session.user_id) {
     return res.status(400).json({ error: 'Not logged in' });
   }
+  
+  await Activity.create({
+    user_id: req.session.user_id,
+    activity_type: 'USER_LOGOUT'
+  });
+
   req.session.destroy( err => {
     if (err) {
       console.error('Logout error:', err);
       return res.status(500).json({ error: 'Internal server error' });
     }
 
-    /*
-    (async () => {
-      await Activity.create({
-        user_id: req.session.user_id,
-        activity_type: 'USER_LOGOUT'
-      });
-    })();
-    */
     return res.json({ success: true });
 
   });
