@@ -372,7 +372,7 @@ function UserPhotos({ userId, loggedInUserId, changeTopBarTitle }) {
                                 </Box>
                                 <Typography>{comment.comment}</Typography>
 
-                                {isPhotoOwner && (
+                                {(isPhotoOwner || (comment.user._id === loggedInUserId)) && (
                                 <Button
                                     size="small"
                                     color="error"

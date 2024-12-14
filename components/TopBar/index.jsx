@@ -32,21 +32,22 @@ function TopBar({ title, user, onLogout }) {
             <AppBar className="topbar-appBar" position="absolute">
                 <Toolbar sx={{ justifyContent: "space-between" }}>
                     <Typography variant="h5" color="inherit">
-                        {user ? `${user.first_name} ${user.last_name}` : "App Title"}
+                        {user ? `Hi ${user.first_name}` : "App Title"} 
                     </Typography>
                     <Typography variant="h5" color="inherit">
                         {title}
                     </Typography>
                     {user ? (
                         <div>
-                            <Typography
+
+                            {/*<Typography
                                 variant="subtitle1"
                                 color="inherit"
                                 sx={{ display: "inline-block", marginRight: 2 }}
                             >
                                 Hi {user.first_name} {user.last_name}
                             </Typography>
-                            
+                            */}
 
                             <Button 
                                 color="inherit" 

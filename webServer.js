@@ -497,6 +497,12 @@ app.post('/photos/:photo_id/unlike', requireLogin, async (req, res) => {
     photo.likes.splice(likeIndex, 1);
     await photo.save();
 
+    await Activity.create({
+      user_id: user_id,
+      activity_type: 'USER_UNLIKE',
+      photo_id: photo._id
+    });
+
     return res.status(200).json({ success: true, likes: photo.likes.length });
   } catch (err) {
     console.error('Error unliking photo:', err);
@@ -533,7 +539,13 @@ app.delete('/photos/:photo_id', requireLogin, async (req, res) => {
       return res.status(403).send({ error: 'Unauthorized to delete this photo' });
     }
 
+    await Activity.create({
+      user_id: userId,
+      activity_type: 'DELETE_PHOTO',
+    });
+
     await Photo.findByIdAndDelete(photo_id);
+
     res.status(200).send({ message: 'Photo deleted successfully' });
   } catch (err) {
     res.status(500).send({ error: 'Internal server error' });
@@ -554,7 +566,15 @@ app.delete('/photos/:photoId/comments/:commentIndex', requireLogin,async (req, r
     }
 
     photo.comments.splice(commentIndex, 1);
+
     await photo.save();
+
+    await Activity.create({
+      user_id: req.session.user_id,
+      activity_type: 'DELETE_COMMENT',
+      photo_id: photo._id
+    });
+
     res.status(200).send('Comment deleted successfully');
   } catch (err) {
     console.error('Error deleting comment:', err);
@@ -575,6 +595,11 @@ app.delete('/users/:user_id', requireLogin, async (req, res) => {
     if (!user) {
       return res.status(404).send({ error: 'User not found' });
     }
+
+    await Activity.create({
+      user_id: user_id,
+      activity_type: 'DELETE_USER',
+    });
 
     // Delete associated photos
     await Photo.deleteMany({ user_id });
@@ -601,9 +626,6 @@ app.delete('/users/:user_id', requireLogin, async (req, res) => {
     res.status(500).send({ error: 'An error occurred while deleting the account' });
   }
 });
-
-
-
 
 const server = app.listen(3000, function () {
   const port = server.address().port;

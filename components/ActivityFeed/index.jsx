@@ -32,11 +32,19 @@ function ActivityFeed({ open, onClose }) {
   }, [open]);
 
   const renderActivityContent = (activity) => {
-    if (['PHOTO_UPLOAD', 'NEW_COMMENT', 'USER_LIKE'].includes(activity.activity_type) && activity.photo_id) {
+    if (['PHOTO_UPLOAD', 'NEW_COMMENT', 'USER_LIKE', 'USER_UNLIKE', 'DELETE_COMMENT'].includes(activity.activity_type) && activity.photo_id) {
+      let fileName = '';
+      if (`${activity.photo_id?.file_name}` === 'undefined') {
+        fileName = 'black.jpeg';
+      }
+      else {
+        fileName = activity.photo_id?.file_name;
+      }
+      //console.log(`fileName: ${fileName}`);
       return (
         <ListItemAvatar>
           <Avatar 
-            src={`/images/${activity.photo_id.file_name}`}
+            src={`/images/${fileName}`}
             variant="square"
             sx={{ width: 50, height: 50 }}
           />
@@ -47,7 +55,10 @@ function ActivityFeed({ open, onClose }) {
   };
 
   const getActivityText = (activity) => {
-    const userName = `${activity.user_id.first_name} ${activity.user_id.last_name}`;
+    let userName = `${activity.user_id?.first_name} ${activity.user_id?.last_name}`;
+    if (userName === 'undefined undefined') {
+      userName = 'An user';
+    }
     switch (activity.activity_type) {
       case 'PHOTO_UPLOAD':
         return `${userName} uploaded a new photo`;
@@ -61,6 +72,14 @@ function ActivityFeed({ open, onClose }) {
         return `${userName} logged out`;
       case 'USER_LIKE':
         return `${userName} liked a photo`;
+      case 'USER_UNLIKE':
+        return `${userName} unliked a photo`;
+      case 'DELETE_USER':
+        return `${userName} deleted their account`;
+      case 'DELETE_COMMENT':
+        return `${userName} deleted a comment`;
+      case 'DELETE_PHOTO':
+        return `${userName} deleted a photo`;
       default:
         return 'Unknown activity';
     }
