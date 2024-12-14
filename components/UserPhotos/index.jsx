@@ -217,9 +217,11 @@ function UserPhotos({ userId, loggedInUserId, changeTopBarTitle }) {
     <Box sx={{ padding: 2, height: "calc(100vh - 64px)", overflow: "auto" }}>
       <Stack spacing={4}>
         {isLoading && <Typography>Loading...</Typography>}
-        <Button variant="contained" onClick={() => setOpen(true)}>
-          Add Photo
-        </Button>
+        {(loggedInUserId === userId) && (
+          <Button variant="contained" onClick={() => setOpen(true)}>
+                    Add Photo
+          </Button>
+        )}
         <Dialog open={open} onClose={() => setOpen(false)}>
           <DialogTitle>Upload Photo</DialogTitle>
           <DialogContent>

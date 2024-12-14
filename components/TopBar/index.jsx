@@ -47,13 +47,6 @@ function TopBar({ title, user, onLogout }) {
                                 Hi {user.first_name} {user.last_name}
                             </Typography>
                             
-                            {/*<Button
-                                color="inherit"
-                                onClick={onAddPhoto}
-                                sx={{ marginRight: 2 }}
-                            >
-                                Add Photo
-                            </Button>*/}
 
                             <Button 
                                 color="inherit" 

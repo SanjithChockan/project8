@@ -334,12 +334,13 @@ app.post('/admin/logout', function (req, res) {
     }
 
     /*
-    await Activity.create({
-      user_id: req.session.user_id,
-      activity_type: 'USER_LOGOUT'
-    });
+    (async () => {
+      await Activity.create({
+        user_id: req.session.user_id,
+        activity_type: 'USER_LOGOUT'
+      });
+    })();
     */
-    
     return res.json({ success: true });
 
   });
