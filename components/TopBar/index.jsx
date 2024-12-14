@@ -5,7 +5,7 @@ import axios from "axios";
 import ActivityFeed from "../ActivityFeed";
 
 
-function TopBar({ title, user, onLogout, onAddPhoto }) {
+function TopBar({ title, user, onLogout }) {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [deleting, setDeleting] = useState(false);
     const [activityDialogOpen, setActivityDialogOpen] = useState(false);
@@ -47,13 +47,13 @@ function TopBar({ title, user, onLogout, onAddPhoto }) {
                                 Hi {user.first_name} {user.last_name}
                             </Typography>
                             
-                            <Button
+                            {/*<Button
                                 color="inherit"
                                 onClick={onAddPhoto}
                                 sx={{ marginRight: 2 }}
                             >
                                 Add Photo
-                            </Button>
+                            </Button>*/}
 
                             <Button 
                                 color="inherit" 
@@ -78,7 +78,7 @@ function TopBar({ title, user, onLogout, onAddPhoto }) {
                             Please Login
                         </Typography>
                     )}
-                    
+
                     <ActivityFeed 
                         open={activityDialogOpen}
                         onClose={() => setActivityDialogOpen(false)}

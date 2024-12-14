@@ -25,6 +25,9 @@ import {
   Link
 } from "@mui/material";
 
+//import LikeButton from "../LikeButton";
+
+
 function UserPhotos({ userId, loggedInUserId, changeTopBarTitle }) {
   const [userPhotos, setUserPhotos] = useState([]);
   const [newComments, setNewComments] = useState({});
@@ -61,6 +64,7 @@ function UserPhotos({ userId, loggedInUserId, changeTopBarTitle }) {
   }, [userId, changeTopBarTitle]);
 
   const handleLikeToggle = (photoId, liked) => {
+
     const url = liked
         ? `http://localhost:3000/photos/${photoId}/unlike`
         : `http://localhost:3000/photos/${photoId}/like`;
@@ -72,8 +76,8 @@ function UserPhotos({ userId, loggedInUserId, changeTopBarTitle }) {
                       ? {
                         ...photo,
                         likes: liked
-                            ? photo.likes.filter((id) => id !== userId)
-                            : [...(photo.likes || []), userId],
+                            ? photo.likes.filter((id) => id !== loggedInUserId)
+                            : [...(photo.likes || []), loggedInUserId],
                       }
                       : photo)
               )
@@ -82,6 +86,7 @@ function UserPhotos({ userId, loggedInUserId, changeTopBarTitle }) {
         .catch((error) => {
           console.error("Error updating like:", error);
         });
+    
   };
 
   const handlePhotoChange = (event) => {
@@ -286,8 +291,9 @@ function UserPhotos({ userId, loggedInUserId, changeTopBarTitle }) {
         </Dialog>
 
         {userPhotos.map((photo) => {
+          
           const likesArray = Array.isArray(photo.likes) ? photo.likes : [];
-          const userLiked = likesArray.includes(userId);
+          const userLiked = likesArray.includes(loggedInUserId);
           const isPhotoOwner = photo.user_id === loggedInUserId;  // Check if logged-in user owns the photo
           
           return (
@@ -297,6 +303,7 @@ function UserPhotos({ userId, loggedInUserId, changeTopBarTitle }) {
                     <Typography variant="body2" color="text.secondary">
                       Posted {new Date(photo.date_time).toLocaleString()}
                     </Typography>
+
                     <Button
                         variant={userLiked ? "contained" : "outlined"}
                         onClick={() => handleLikeToggle(photo._id, userLiked)}
