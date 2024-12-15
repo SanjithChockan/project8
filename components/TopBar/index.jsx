@@ -1,3 +1,4 @@
+/* eslint-disable no-alert */
 import React, { useState } from "react";
 import { AppBar, Toolbar, Typography, Button, Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
 import "./styles.css";
